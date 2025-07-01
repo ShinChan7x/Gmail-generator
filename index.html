@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gmail Alias Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0f0f0f, #000000);
+      color: white;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 80px auto;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 60px rgba(0, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 20px;
+      color: #00f0ff;
+      text-shadow: 0 0 10px #00f0ff88;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 18px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: none;
+      margin-bottom: 20px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(45deg, #00f0ff, #0e91d1);
+      border: none;
+      padding: 12px;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(45deg, #00ffbd, #00c2ff);
+    }
+
+    .output {
+      margin-top: 20px;
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 40px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Gmail Alias Generator</h1>
+    <input type="text" id="emailInput" placeholder="Enter your Gmail address (e.g. johndoe@gmail.com)" />
+    <input type="text" id="tagInput" placeholder="Optional +tag (e.g. newsletter)" />
+    <button onclick="generateAliases()">Generate Aliases</button>
+    <div class="output" id="aliasOutput"></div>
+  </div>
+  <div class="footer">Made with ❤️ by ChatGPT & You</div>
+
+  <script>
+    function generateAliases() {
+      const email = document.getElementById("emailInput").value.trim();
+      const tag = document.getElementById("tagInput").value.trim();
+      const output = document.getElementById("aliasOutput");
+      output.innerHTML = '';
+
+      if (!email.includes('@gmail.com')) {
+        output.innerHTML = 'Please enter a valid Gmail address.';
+        return;
+      }
+
+      const [user, domain] = email.split('@');
+      const aliases = new Set();
+
+      function insertDots(str) {
+        const results = new Set();
+        const total = Math.pow(2, str.length - 1);
+        for (let i = 0; i < total; i++) {
+          let bin = i.toString(2).padStart(str.length - 1, '0');
+          let result = '';
+          for (let j = 0; j < str.length; j++) {
+            result += str[j];
+            if (j < str.length - 1 && bin[j] === '1') result += '.';
+          }
+          results.add(result);
+        }
+        return results;
+      }
+
+      const dotted = insertDots(user);
+      dotted.forEach(variant => {
+        let alias = `${variant}@${domain}`;
+        if (tag) alias = `${variant}+${tag}@${domain}`;
+        aliases.add(alias);
+      });
+
+      output.innerHTML = Array.from(aliases).slice(0, 100).join('\n');
+    }
+  </script>
+</body>
+</html>
