@@ -1,90 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Future‑Ready Gmail Alias Generator</title>
-  <style>
-    /* Base Styles & Variables */
-    :root {
-      --bg-light: #f4f4f4;
-      --bg-dark: #111;
-      --glass-light: rgba(255,255,255,0.2);
-      --glass-dark: rgba(0,0,0,0.4);
-      --accent: #00f0ff;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Segoe UI", sans-serif; min-height:100vh; transition: background .3s, color .3s; }
-    body.light { background: var(--bg-light); color: #222; }
-    body.dark { background: var(--bg-dark); color: #ddd; }
-
-    .container {
-      max-width: 800px; margin: 40px auto; padding: 20px;
-      background: var(--glass-dark);
-      border-radius: 20px;
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    h1 { font-size: 2rem; text-align: center; margin-bottom: 20px; color: var(--accent); }
-
-    .flex { display: flex; gap: 10px; flex-wrap: wrap; }
-
-    .flex input[type="text"], .flex select {
-      flex: 1; padding: 12px; font-size: 1rem; border-radius: 8px; border: none;
-      background: var(--glass-light);
-      color: inherit;
-    }
-
-    button, .alias-copy {
-      padding: 10px 16px; cursor: pointer; border: none; border-radius: 8px;
-      background: var(--accent); color: #000; font-weight: bold;
-      transition: background .3s;
-    }
-    button:hover, .alias-copy:hover { background: #00c2ff; }
-
-    #themeToggle {
-      position: fixed; top: 20px; right: 20px;
-    }
-
-    #aliasList {
-      margin-top: 20px;
-      display: grid; grid-template-columns: 1fr auto;
-      gap: 8px; max-height: 300px; overflow-y: auto;
-    }
-    .alias-item { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
-
-    .drawer {
-      position: fixed; right: -320px; top: 0; width: 320px; height: 100%;
-      background: var(--glass-dark); padding: 20px;
-      box-shadow: -5px 0 20px rgba(0,0,0,0.5);
-      transition: right .3s;
-      overflow-y: auto;
-    }
-    .drawer.open { right: 0; }
-
-    .drawer-toggle {
-      position: fixed; top: 20px; right: 60px;
-      background: var(--accent); padding: 10px; border-radius: 50%;
-    }
-
-    .history-item { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .export-btns { margin-top: 10px; display: flex; gap: 8px; }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="dark">
   <button id="themeToggle">🌙</button>
   <button class="drawer-toggle">📜</button>
 
+  <div id="particles-js"></div>
+
   <div class="container">
     <h1>🌌 Gmail Alias Generator</h1>
+    <input type="text" id="searchBox" placeholder="Search alias..." />
     <div class="flex">
-      <input type="text" id="email" placeholder="johndoe@gmail.com">
+      <input type="text" id="email" placeholder="johndoe@gmail.com" />
       <select id="tagSelect">
         <option value="">+tag (optional)</option>
         <option value="newsletter">newsletter</option>
         <option value="shopping">shopping</option>
         <option value="banking">banking</option>
+        <option value="job">job</option>
+        <option value="alerts">alerts</option>
       </select>
       <button onclick="generate()">Generate</button>
     </div>
@@ -97,99 +36,11 @@
     <div class="export-btns">
       <button onclick="exportHistory('csv')">Export CSV</button>
       <button onclick="exportHistory('json')">Export JSON</button>
+      <button onclick="exportHistory('txt')">Export TXT</button>
     </div>
   </div>
 
-  <script>
-    let history = JSON.parse(localStorage.getItem('aliasHist') || '[]');
-
-    function toggleTheme() {
-      const body = document.body;
-      body.classList.toggle('dark');
-      body.classList.toggle('light');
-      document.body.classList.contains('dark') ? themeButton.textContent = '🌙' : themeButton.textContent = '🌞';
-    }
-
-    function toggleDrawer() {
-      document.getElementById('historyDrawer').classList.toggle('open');
-      renderHistory();
-    }
-
-    function generate() {
-      const email = document.getElementById('email').value.trim();
-      const tag = document.getElementById('tagSelect').value;
-      const out = document.getElementById('aliasList');
-      out.innerHTML = '';
-      if (!email.endsWith('@gmail.com')) return alert('Valid Gmail needed');
-
-      const user = email.split('@')[0];
-      const domains = ['@gmail.com'];
-      const variants = new Set();
-
-      function dotVariants(str) {
-        const n = str.length-1;
-        for (let m=0;m<Math.min(512, 1<<n);m++) {
-          let s='', b=m.toString(2).padStart(n,'0');
-          for (let i=0;i<str.length;i++) {
-            s+=str[i];
-            if (i<n && b[i]==='1') s+='.';
-          }
-          variants.add(s);
-        }
-      }
-
-      dotVariants(user);
-
-      for (let v of variants) {
-        let a = v + (tag ? '+'+tag : '') + domains[0];
-        const div = document.createElement('div');
-        div.className='alias-item';
-        div.textContent = a;
-        const copyBtn = document.createElement('button');
-        copyBtn.className='alias-copy';
-        copyBtn.textContent = '📋';
-        copyBtn.onclick = ()=>navigator.clipboard.writeText(a);
-        out.append(div, copyBtn);
-      }
-
-      // save history
-      history.unshift({ email, tag, time: new Date().toISOString() });
-      if (history.length > 20) history.pop();
-      localStorage.setItem('aliasHist', JSON.stringify(history));
-    }
-
-    function renderHistory() {
-      const list = document.getElementById('historyList');
-      list.innerHTML = '';
-      history.forEach(h=>{
-        const p = document.createElement('div');
-        p.className='history-item';
-        p.textContent = `${h.email} +${h.tag} @ ${new Date(h.time).toLocaleString()}`;
-        list.append(p);
-      });
-    }
-
-    function exportHistory(type) {
-      let data = '';
-      if (type==='csv') {
-        data = 'Email,Tag,Time\n' + history.map(h=>`${h.email},${h.tag},${h.time}`).join('\n');
-        download(data, 'history.csv','text/csv');
-      } else {
-        data = JSON.stringify(history, null, 2);
-        download(data, 'history.json','application/json');
-      }
-    }
-
-    function download(content, fname, type) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([content], { type }));
-      a.download = fname;
-      a.click();
-    }
-
-    const themeButton = document.getElementById('themeToggle');
-    themeButton.onclick = toggleTheme;
-    document.querySelector('.drawer-toggle').onclick = toggleDrawer;
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
